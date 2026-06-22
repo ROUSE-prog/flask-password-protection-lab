@@ -1,205 +1,73 @@
-# Password Protection Lab
+# Flask Password Protection Lab
 
-## Introduction
+## Overview
 
-In this lab, you'll implement a secure authentication system that uses password hashing,
-sessions, and route access control to manage user login and logout. This brings together
-all the concepts you’ve learned about authentication so far, but with a critical
-enhancement: users will now verify their identity using a password, and that password
-will be safely hashed and stored in the database.
+This project demonstrates user authentication and password protection using Flask, SQLAlchemy, Flask-Bcrypt, and Flask sessions.
 
-Plaintext password storage is one of the most dangerous vulnerabilities in any web
-application. Instead of storing passwords directly, we’ll use Flask-Bcrypt to generate
-one-way encrypted hashes, which can be validated without ever revealing the original
-password.
+The application allows users to:
 
-You’ll build the full login workflow: signing up new users, verifying credentials on login,
-checking whether a session is active, and logging users out. All of this will happen on the
-Flask backend, while the provided React frontend will automatically reflect the user’s
-authenticated state.
+* Create accounts with secure password hashing
+* Log in using a username and password
+* Maintain authentication state with sessions
+* Log out and clear session data
+* Verify active user sessions
 
-By the end of this lab, you’ll have implemented a secure, production-ready authentication
-system using password hashing and session-based login—essential skills for any backend
-developer working on user-facing applications.
+## Technologies Used
 
-## Tools & Resources
+* Python
+* Flask
+* Flask-RESTful
+* Flask-SQLAlchemy
+* Flask-Bcrypt
+* Flask-Migrate
+* Marshmallow
+* SQLite
 
-- [GitHub Repo](https://github.com/learn-co-curriculum/flask-password-protection-lab)
-- [Flask-Bcrypt](https://flask-bcrypt.readthedocs.io/en/1.0.1/)
+## Features
 
-## Set Up
+### User Signup
 
-There is some starter code in place for a Flask API backend and a React frontend.
-To get set up, run:
+Creates a new user account and securely hashes the user's password before storing it in the database.
 
-```console
-$ pipenv install && pipenv shell
-$ npm install --prefix client
-$ cd server
-$ flask db upgrade head
-```
+### User Login
 
-You can work on this lab by running the tests with `pytest -x`. It will also be
-helpful to see what's happening during the request/response cycle by running the
-app in the browser. You can run the Flask server with:
+Authenticates a user by comparing the submitted password against the stored password hash.
 
-```console
-$ python app.py
-```
+### Session Authentication
 
-And you can run React in another terminal with:
+Stores the authenticated user's ID in the Flask session and allows session validation through the `/check_session` endpoint.
 
-```console
-$ npm start --prefix client
-```
+### User Logout
 
-You don't have to make any changes to the React code to get this lab working.
+Removes the authenticated user's session information and logs the user out.
 
-## Instructions
+## Password Security
 
-### Task 1: Define the Problem
+Passwords are never stored in plain text.
 
-Our app has three pages:
+The application uses Flask-Bcrypt to:
 
-1. A signup page, where the user enters their username, password, and password
-   confirmation.
-2. A login page, where the user submits their username and password and are then
-   logged in.
-3. A user homepage, which says, "Welcome, ${username}!"
+* Generate password hashes during signup
+* Verify passwords during login
+* Prevent direct access to stored password hashes
 
-Users should not be able to log in if they enter an incorrect password.
+## API Routes
 
-> **Note: we're not covering password validations in this lab, so don't worry
-> about those. Password validation is hard to get right anyway — it's
-> surprisingly easy to produce rules that decrease password security rather than
-> enhance it.**
+| Method | Route          | Description            |
+| ------ | -------------- | ---------------------- |
+| POST   | /signup        | Create a new user      |
+| POST   | /login         | Authenticate a user    |
+| GET    | /check_session | Verify current session |
+| DELETE | /logout        | Log out current user   |
+| DELETE | /clear         | Clear session data     |
 
-### Task 2: Determine the Design
+## Testing
 
-We need to implement a way for users to sign up, log in, and log out with secure
-passwords.
-
-To complete the lab and get the tests passing, you will need to:
-
-- Add methods to the User model to protect and set the password_hash property and
-  authenticate a user with their password.
-
-- Create a `Signup` resource with a `post()` method that responds to a
-  `POST /signup` request. It should: create a new user; save their hashed
-  password in the database; save the user's ID in the session object; and return
-  the user object in the JSON response.
-
-- Create a `CheckSession` resource with a `get()` method that responds to a
-  `GET /check_session` request. If the user is authenticated, return the user
-  object in the JSON response. Otherwise, return an empty response with a 204
-  status code.
-
-- Create a `Login` resource with a `post()` method for logging in that
-  responds to a `POST /login` request and returns the user as JSON.
-  
-- Create a `Logout` resource with a `delete()` method for logging out
-  that responds to a `DELETE /logout` request.
-
-### Task 3: Develop, Test, and Refine the Code
-
-#### Step 1: Protect the `password_hash` Property
-
-In the User model, add logic to protect the password_property by raising an Exception.
-
-```python
-# Build method to protect password_hash property
-@hybrid_property
-def password_hash(self):
-    pass
-```
-
-#### Step 2: Use Bcrypt to Hash the Password
-
-In the User model, use `bcrypt.generate_password_hash` to set the property.
-
-```python
-# Build method to set password hash property using bcrypt.generate_password_hash()
-@password_hash.setter
-def password_hash(self, password):
-    pass
-```
-
-#### Step 3: Use Bcrypt to Authenticate a User
-
-In the User model, use `bcrypt.check_password_hash` to verify a user's password.
-
-```python
-# Build authenticate method that uses bcrypt.check_password_hash()
-def authenticate(self, password):
-    pass
-```
-
-There are no tests for these methods, but you can verify they're set up properly by
-using `flask shell` and creating some users.
-
-Once you have all methods created, commit your code.
-
-#### Step 4: Create Signup Endpoint
-
-Create `POST /signup` endpoint. Implement the following:
-- Create a new user. 
-- Save user to db with their hashed password using bcrypt.
-- Log the user in with sessions.
-- Return the user object.
-
-Test your logic with `pytest` and commit your code.
-
-#### Step 5: Create Check Session Endpoint
-
-Create `GET /check_session` endpoint. Implement the following:
-- If the user is authenticated, return the user object in the JSON response. 
-- Else, return an empty response with a 204 status code.
-
-Test your logic with `pytest` and commit your code.
-
-#### Step 6: Create Login Endpoint
-
-Create `POST /login` endpoint. Implement the following:
-- Log the user in with sessions.
-- Returns the user as JSON.
-
-Test your logic with `pytest` and commit your code.
-
-#### Step 7: Create Logout Endpoint
-  
-Create `DELETE /logout` endpoint. Implement the following:
-- Log the user out with sessions.
-
-Test your logic with `pytest` and commit your code.
-
-#### Step 8: Commit and Push Git History
-
-Once all tests are passing, `git commit` (if needed) and `git push` your final code
-to GitHub:
+Run the test suite with:
 
 ```bash
-git add .
-git commit -m "final solution"
-git push
+pipenv run python -m pytest
 ```
 
-If you created a separate feature branch, remember to open a PR on main and merge.
+All provided tests pass successfully.
 
-### Task 4: Document and Maintain
-
-Optional Best Practice documentation steps:
-* Add comments to the code to explain purpose and logic, clarifying intent and 
-functionality of your code to other developers.
-* Update README text to reflect the functionality of the application following 
-https://makeareadme.com. 
-  * Add screenshot of completed work included in Markdown in README.
-* Delete any stale branches on GitHub
-* Remove unnecessary/commented out code
-* If needed, update git ignore to remove sensitive data
-
-## Submit your solution
-
-CodeGrade will use the same test suite as the test suite included.
-
-Once all tests are passing, commit and push your work using `git` to submit to 
-CodeGrade through Canvas.
